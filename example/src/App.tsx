@@ -1,10 +1,31 @@
 import React from 'react'
 
-import { ExampleComponent } from 'elementos'
-import 'elementos/dist/index.css'
+import { atom, molecule, observe } from 'elementos'
+
+const a = atom(0, {
+  actions: (set) => ({
+    foo: () => 3
+  })
+})
+
+const b = atom(0)
+const c = molecule(
+  {
+    a,
+    b
+  },
+  {
+    deriver: ({ a, b }) => a + b,
+    actions: (set) => ({
+      foo: () => 3
+    })
+  }
+)
+
+observe(c, console.log)
 
 const App = () => {
-  return <ExampleComponent text="Create React Library Example 😄" />
+  return <div>hi</div>
 }
 
 export default App
