@@ -3,26 +3,30 @@ import { Observable } from './observable'
 
 export type EffectCleanup = () => void
 export type Effect<State> = (value: State) => EffectCleanup | void
+export type Dispose = () => void
 
 export const observe = <State>(
   observable: Observable<State>,
   effect: Effect<State>
-) => {
+): Dispose => {
+  let cleanup: EffectCleanup | void
   const transactions = new Set<Transaction>()
-  const tryRunEffect = () => {
-    try {
-      effect(observable.get())
-    } catch (err) {
-      console.warn('effect threw an error:', err)
+  const runCleanup = () => {
+    if (typeof cleanup === 'function') {
+      cleanup()
     }
   }
-  tryRunEffect()
-  return observable.subscribe((transaction) => {
+  const runEffect = () => {
+    runCleanup()
+    cleanup = effect(observable.get())
+  }
+  runEffect()
+  const unsubscribe = observable.subscribe((transaction) => {
     if (transaction) {
       if (!transactions.has(transaction)) {
         transactions.add(transaction)
         transaction.onCommit(() => {
-          tryRunEffect()
+          runEffect()
           transactions.delete(transaction)
         })
         transaction.onRollback(() => {
@@ -30,7 +34,14 @@ export const observe = <State>(
         })
       }
     } else {
-      tryRunEffect()
+      runEffect()
     }
   })
+
+  const dispose = () => {
+    unsubscribe()
+    runCleanup()
+  }
+
+  return dispose
 }

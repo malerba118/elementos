@@ -4,7 +4,7 @@ import { atom, molecule, observe } from 'elementos'
 
 const a = atom(0, {
   actions: (set) => ({
-    foo: () => 3
+    foo: () => set(3)
   })
 })
 
@@ -15,14 +15,12 @@ const c = molecule(
     b
   },
   {
-    deriver: ({ a, b }) => a + b,
-    actions: (set) => ({
-      foo: () => 3
-    })
+    deriver: ({ a, b }) => a + b
   }
 )
 
 observe(c, console.log)
+a.actions.foo()
 
 const App = () => {
   return <div>hi</div>

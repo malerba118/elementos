@@ -11,10 +11,10 @@ export const createSubscriptionManager = <SubscriberArgs extends any[] = []>({
   return {
     subscribe: (subscriber: Subscriber): Unsubscribe => {
       subscribers.push(subscriber)
-      onSubscriberChange?.(subscribers.length)
+      onSubscriberChange && onSubscriberChange(subscribers.length)
       return () => {
         subscribers = subscribers.filter((s) => s !== subscriber)
-        onSubscriberChange?.(subscribers.length)
+        onSubscriberChange && onSubscriberChange(subscribers.length)
       }
     },
     notifySubscribers: (...args: SubscriberArgs) => {

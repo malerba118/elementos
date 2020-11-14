@@ -1,6 +1,6 @@
 export * from './atom'
 export * from './molecule'
-// export * from './derived'
+export * from './derived'
 export * from './observe'
 export * from './observable'
 export * from './batched'
