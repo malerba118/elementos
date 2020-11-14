@@ -2,7 +2,8 @@ import {
   Observable,
   ObservableMap,
   ExtractObservableTypes,
-  ExtractObservableType
+  ExtractObservableType,
+  ObserverChangeSubscriber
 } from './observable'
 import { Transaction } from './transaction'
 import { createSubscriptionManager } from './utils/subscription'
@@ -47,7 +48,21 @@ export const molecule = <
     return args
   }
   let value: DerivedState = deriver(getChildrenValues())
-  const manager = createSubscriptionManager<[Transaction | undefined]>()
+  const observerChangeManager = createSubscriptionManager<
+    Parameters<ObserverChangeSubscriber>
+  >()
+  let unsubscribeFromChildren: Unsubscribe | undefined
+  const manager = createSubscriptionManager<[Transaction | undefined]>({
+    onSubscriberChange: ({ count }) => {
+      observerChangeManager.notifySubscribers({ count })
+      if (count > 0 && !unsubscribeFromChildren) {
+        unsubscribeFromChildren = subscribeToChildren()
+      } else if (count === 0 && unsubscribeFromChildren) {
+        unsubscribeFromChildren()
+        unsubscribeFromChildren = undefined
+      }
+    }
+  })
   const transactionValues = new WeakMap<Transaction, DerivedState>()
 
   const subscribeToChildren = () => {
@@ -80,8 +95,6 @@ export const molecule = <
     return unsubscribeFromChildren
   }
 
-  subscribeToChildren()
-
   let observable: Observable<DerivedState> = {
     get: (selector = (x) => x as any, transaction) => {
       if (transaction && transactionValues.has(transaction)) {
@@ -91,6 +104,9 @@ export const molecule = <
     },
     subscribe: (subscriber: (transaction?: Transaction) => void) => {
       return manager.subscribe(subscriber)
+    },
+    onObserverChange: (subscriber) => {
+      return observerChangeManager.subscribe(subscriber)
     }
   }
 

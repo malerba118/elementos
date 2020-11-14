@@ -1,6 +1,10 @@
-import { Observable, ExtractObservableType } from './observable'
+import {
+  Observable,
+  ExtractObservableType,
+  ObserverChangeSubscriber
+} from './observable'
 import { Transaction } from './transaction'
-import { createSubscriptionManager } from './utils/subscription'
+import { createSubscriptionManager, Unsubscribe } from './utils/subscription'
 
 export const derived = <
   Child extends Observable<any>,
@@ -13,7 +17,21 @@ export const derived = <
     return child.get((x) => x, transaction)
   }
   let value: DerivedState = deriver(getChildValue())
-  const manager = createSubscriptionManager<[Transaction | undefined]>()
+  const observerChangeManager = createSubscriptionManager<
+    Parameters<ObserverChangeSubscriber>
+  >()
+  let unsubscribeFromChild: Unsubscribe | undefined
+  const manager = createSubscriptionManager<[Transaction | undefined]>({
+    onSubscriberChange: ({ count }) => {
+      observerChangeManager.notifySubscribers({ count })
+      if (count > 0 && !unsubscribeFromChild) {
+        unsubscribeFromChild = subscribeToChild()
+      } else if (count === 0 && unsubscribeFromChild) {
+        unsubscribeFromChild()
+        unsubscribeFromChild = undefined
+      }
+    }
+  })
   const transactionValues = new WeakMap<Transaction, DerivedState>()
 
   const subscribeToChild = () => {
@@ -39,8 +57,6 @@ export const derived = <
     return unsubscribe
   }
 
-  subscribeToChild()
-
   let observable: Observable<DerivedState> = {
     get: (selector = (x) => x as any, transaction) => {
       if (transaction && transactionValues.has(transaction)) {
@@ -50,6 +66,9 @@ export const derived = <
     },
     subscribe: (subscriber: (transaction?: Transaction) => void) => {
       return manager.subscribe(subscriber)
+    },
+    onObserverChange: (subscriber) => {
+      return observerChangeManager.subscribe(subscriber)
     }
   }
 

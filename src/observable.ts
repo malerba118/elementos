@@ -2,6 +2,7 @@ import { Transaction } from './transaction'
 
 export type Unsubscribe = () => void
 export type Subscriber = (transaction?: Transaction) => void
+export type ObserverChangeSubscriber = (params: { count: number }) => void
 
 export interface Observable<State> {
   get: <Selection = State>(
@@ -9,6 +10,7 @@ export interface Observable<State> {
     transaction?: Transaction
   ) => Selection
   subscribe: (subscriber: Subscriber) => Unsubscribe
+  onObserverChange: (subscriber: ObserverChangeSubscriber) => Unsubscribe
 }
 
 export type ExtractObservableType<Type> = Type extends Observable<infer X>

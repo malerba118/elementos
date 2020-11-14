@@ -1,6 +1,6 @@
 import { createSubscriptionManager } from './utils/subscription'
 import { Transaction } from './transaction'
-import { Observable } from './observable'
+import { Observable, ObserverChangeSubscriber } from './observable'
 import { batched } from './batched'
 import { getCurrentTransaction } from './context'
 
@@ -33,7 +33,14 @@ export const atom = <State, Actions extends {} = DefaultActions<State>>(
 ): Atom<State, Actions> => {
   let value: State = defaultValue
   const transactionValues = new WeakMap<Transaction, State>()
-  const manager = createSubscriptionManager<[Transaction | undefined]>()
+  const observerChangeManager = createSubscriptionManager<
+    Parameters<ObserverChangeSubscriber>
+  >()
+  const manager = createSubscriptionManager<[Transaction | undefined]>({
+    onSubscriberChange: ({ count }) => {
+      observerChangeManager.notifySubscribers({ count })
+    }
+  })
   const set = batched(
     (
       setter: Setter<State> | State,
@@ -69,6 +76,7 @@ export const atom = <State, Actions extends {} = DefaultActions<State>>(
       manager.notifySubscribers(transaction)
     }
   )
+
   return {
     get: (
       selector = (x) => x as any,
@@ -81,6 +89,9 @@ export const atom = <State, Actions extends {} = DefaultActions<State>>(
     },
     subscribe: (subscriber: (transaction?: Transaction) => void) => {
       return manager.subscribe(subscriber)
+    },
+    onObserverChange: (subscriber) => {
+      return observerChangeManager.subscribe(subscriber)
     },
     actions: options?.actions?.(set) || (({ set } as any) as Actions)
   }
