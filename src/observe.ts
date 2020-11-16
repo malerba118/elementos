@@ -20,12 +20,12 @@ export const observe = <State>(
     runCleanup()
     cleanup = effect(observable.get())
   }
-  runEffect()
+
   const unsubscribe = observable.subscribe((transaction) => {
     if (transaction) {
       if (!transactions.has(transaction)) {
         transactions.add(transaction)
-        transaction.onCommit(() => {
+        transaction.onCommitPhaseTwo(() => {
           runEffect()
           transactions.delete(transaction)
         })
@@ -37,6 +37,8 @@ export const observe = <State>(
       runEffect()
     }
   })
+
+  runEffect()
 
   const dispose = () => {
     unsubscribe()

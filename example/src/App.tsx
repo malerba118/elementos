@@ -12,11 +12,19 @@ const App = () => {
     const request$ = createRequest([])
 
     beforeUnmount(
+      observe(request$, ({ isPending, status, data }) => {
+        console.log({ isPending, status, data })
+      })
+    )
+
+    beforeUnmount(
       observe(pagination$, ({ page }) => {
         request$.actions.setPending()
         api
           .fetchTodos({ page })
-          .then(request$.actions.setFulfilled)
+          .then((data) => {
+            request$.actions.setFulfilled(data)
+          })
           .catch(request$.actions.setRejected)
       })
     )

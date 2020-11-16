@@ -15,14 +15,14 @@ export const batched = <ExecutorParams extends any[], ExecutorReturn>(
       setCurrentTransaction(currentTransaction)
       try {
         let returnVal = executor(...args)
-        currentTransaction.commit()
         setCurrentTransaction(undefined)
+        currentTransaction.commit()
         return returnVal
       } catch (err) {
+        setCurrentTransaction(undefined)
         if (currentTransaction) {
           currentTransaction.rollback()
         }
-        setCurrentTransaction(undefined)
         throw err
       }
     }

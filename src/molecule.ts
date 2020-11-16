@@ -6,7 +6,16 @@ import {
   ObserverChangeSubscriber
 } from './observable'
 import { Transaction } from './transaction'
+import { getCurrentTransaction } from './context'
 import { createSubscriptionManager } from './utils/subscription'
+import { memoized, defaultParamsEqual } from './utils/memoize'
+
+const paramsEqual = (params1: any[] | undefined, params2: any[]) => {
+  return defaultParamsEqual(
+    params1 && Object.values(params1[0]),
+    Object.values(params2[0])
+  )
+}
 
 type Unsubscribe = () => void
 
@@ -47,7 +56,7 @@ export const molecule = <
     })
     return args
   }
-  let value: DerivedState = deriver(getChildrenValues())
+  const memoizedDeriver = memoized(deriver, { paramsEqual })
   const observerChangeManager = createSubscriptionManager<
     Parameters<ObserverChangeSubscriber>
   >()
@@ -63,27 +72,33 @@ export const molecule = <
       }
     }
   })
-  const transactionValues = new WeakMap<Transaction, DerivedState>()
+  const transactionDerivers = new WeakMap<
+    Transaction,
+    Deriver<Children, DerivedState>
+  >()
 
   const subscribeToChildren = () => {
+    // memoizedDeriver(getChildrenValues())
     const unsubscribers: Unsubscribe[] = []
     Object.values(children).forEach((observable: any) => {
       const unsubscribe = observable.subscribe((transaction: Transaction) => {
         if (transaction) {
-          if (!transactionValues.has(transaction)) {
-            transaction.onCommit(() => {
-              value = transactionValues.get(transaction) as DerivedState
-              transactionValues.delete(transaction)
+          if (!transactionDerivers.has(transaction)) {
+            transaction.onCommitPhaseOne(() => {
+              // memoizedDeriver(getChildrenValues(transaction))
+              transactionDerivers.delete(transaction)
             })
             transaction.onRollback(() => {
-              transactionValues.delete(transaction)
+              transactionDerivers.delete(transaction)
             })
-            transactionValues.set(transaction, value)
+            transactionDerivers.set(
+              transaction,
+              memoized(deriver, { paramsEqual })
+            )
           }
-          let nextValue: DerivedState = deriver(getChildrenValues(transaction))
-          transactionValues.set(transaction, nextValue)
         }
-        value = deriver(getChildrenValues(transaction))
+        const transactionDeriver = transactionDerivers.get(transaction)
+        transactionDeriver?.(getChildrenValues(transaction))
         manager.notifySubscribers(transaction)
       })
       unsubscribers.push(unsubscribe)
@@ -96,11 +111,17 @@ export const molecule = <
   }
 
   let observable: Observable<DerivedState> = {
-    get: (selector = (x) => x as any, transaction) => {
-      if (transaction && transactionValues.has(transaction)) {
-        return selector(transactionValues.get(transaction) as DerivedState)
+    get: (
+      selector = (x) => x as any,
+      transaction = getCurrentTransaction()
+    ) => {
+      if (transaction && transactionDerivers.has(transaction)) {
+        const transactionDeriver = transactionDerivers.get(transaction)
+        return selector(
+          transactionDeriver?.(getChildrenValues(transaction)) as DerivedState
+        )
       }
-      return selector(value)
+      return selector(memoizedDeriver(getChildrenValues()))
     },
     subscribe: (subscriber: (transaction?: Transaction) => void) => {
       return manager.subscribe(subscriber)

@@ -3,6 +3,7 @@ import {
   ExtractObservableType,
   ObserverChangeSubscriber
 } from './observable'
+import { getCurrentTransaction } from './context'
 import { Transaction } from './transaction'
 import { createSubscriptionManager, Unsubscribe } from './utils/subscription'
 
@@ -35,10 +36,11 @@ export const derived = <
   const transactionValues = new WeakMap<Transaction, DerivedState>()
 
   const subscribeToChild = () => {
+    value = deriver(getChildValue())
     const unsubscribe = child.subscribe((transaction?: Transaction) => {
       if (transaction) {
         if (!transactionValues.has(transaction)) {
-          transaction.onCommit(() => {
+          transaction.onCommitPhaseOne(() => {
             value = transactionValues.get(transaction) as DerivedState
             transactionValues.delete(transaction)
           })
@@ -58,7 +60,10 @@ export const derived = <
   }
 
   let observable: Observable<DerivedState> = {
-    get: (selector = (x) => x as any, transaction) => {
+    get: (
+      selector = (x) => x as any,
+      transaction = getCurrentTransaction()
+    ) => {
       if (transaction && transactionValues.has(transaction)) {
         return selector(transactionValues.get(transaction) as DerivedState)
       }

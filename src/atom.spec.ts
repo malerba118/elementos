@@ -64,9 +64,7 @@ describe('atom', () => {
         count$.actions.set(11)
         throw new Error('foo')
       })
-    } catch (err) {
-      console.log(getCurrentTransaction())
-    }
+    } catch (err) {}
     expect(count$.get()).toEqual(10)
   })
 

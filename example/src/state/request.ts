@@ -34,15 +34,17 @@ export const createRequest = <T>(initialData: T) => {
           error.actions.set(err)
         })
       }),
-      deriver: ({ status, data, error }) => ({
-        isInitial: status === Status.Initial,
-        isPending: status === Status.Pending,
-        isFulfilled: status === Status.Fulfilled,
-        isRejected: status === Status.Rejected,
-        status,
-        data,
-        error
-      })
+      deriver: ({ status, data, error }) => {
+        return {
+          isInitial: status === Status.Initial,
+          isPending: status === Status.Pending,
+          isFulfilled: status === Status.Fulfilled,
+          isRejected: status === Status.Rejected,
+          status,
+          data,
+          error
+        }
+      }
     }
   )
 }

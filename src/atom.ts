@@ -48,7 +48,7 @@ export const atom = <State, Actions extends {} = DefaultActions<State>>(
     ) => {
       if (transaction) {
         if (!transactionValues.has(transaction)) {
-          transaction.onCommit(() => {
+          transaction.onCommitPhaseOne(() => {
             value = transactionValues.get(transaction) as State
             transactionValues.delete(transaction)
           })

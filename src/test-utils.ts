@@ -11,8 +11,8 @@ export const USER: User = {
 }
 
 export const USER_2: User = {
-  firstName: 'foo',
-  lastName: 'bar'
+  firstName: 'frostin',
+  lastName: 'malaria'
 }
 
 export const createUser$ = (user: User) => {
