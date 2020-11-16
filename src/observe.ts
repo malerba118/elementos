@@ -10,6 +10,8 @@ export const observe = <State>(
   effect: Effect<State>
 ): Dispose => {
   let cleanup: EffectCleanup | void
+  let prevState: State
+  let firstInvocation = true
   const transactions = new Set<Transaction>()
   const runCleanup = () => {
     if (typeof cleanup === 'function') {
@@ -17,8 +19,13 @@ export const observe = <State>(
     }
   }
   const runEffect = () => {
-    runCleanup()
-    cleanup = effect(observable.get())
+    let state = observable.get()
+    if (firstInvocation || !Object.is(prevState, state)) {
+      runCleanup()
+      cleanup = effect(state)
+      prevState = state
+      firstInvocation = false
+    }
   }
 
   const unsubscribe = observable.subscribe((transaction) => {
