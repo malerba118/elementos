@@ -19,6 +19,12 @@ const paramsEqual = (params1: any[] | undefined, params2: any[]) => {
 
 type Unsubscribe = () => void
 
+export type Deriver<Deps extends ObservableMap, DerivedState> = (
+  args: {
+    [Index in keyof Deps]: ExtractObservableType<Deps[Index]>
+  }
+) => DerivedState
+
 export interface Molecule<
   Children extends ObservableMap,
   Actions extends {},
@@ -137,9 +143,3 @@ export const molecule = <
     actions: actions?.(children) || ({} as Actions)
   }
 }
-
-export type Deriver<Deps extends ObservableMap, DerivedState> = (
-  args: {
-    [Index in keyof Deps]: ExtractObservableType<Deps[Index]>
-  }
-) => DerivedState

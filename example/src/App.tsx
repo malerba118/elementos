@@ -1,71 +1,48 @@
 import React from 'react'
-import { observe } from 'elementos'
+import { Flex, ChakraProvider } from '@chakra-ui/react'
+import { atom } from 'elementos'
 import { useInit } from './react/useInit'
 import { useObservable } from './react/useObservable'
-import { createRequest } from './state/request'
-import { createPagination } from './state/pagination'
-import * as api from './api'
+// import { createRequest } from './state/request'
+// import { createPagination } from './state/pagination'
+import Folders from './Folders'
+import Folder from './Folder'
+import Note from './Note'
+import { theme } from './theme'
+// import * as api from './api'
 
 const App = () => {
-  const self = useInit(({ beforeUnmount }) => {
-    const pagination$ = createPagination({ page: 1, totalPages: 10 })
-    const request$ = createRequest([])
-
-    beforeUnmount(
-      observe(request$, ({ isPending, status, data }) => {
-        console.log({ isPending, status, data })
-      })
-    )
-
-    beforeUnmount(
-      observe(pagination$, ({ page }) => {
-        request$.actions.setPending()
-        api
-          .fetchTodos({ page })
-          .then((data) => {
-            request$.actions.setFulfilled(data)
-          })
-          .catch(request$.actions.setRejected)
-      })
-    )
+  const { selectedFolder$, selectedNote$ } = useInit(() => {
+    const selectedFolder$ = atom<string | null>(null)
+    const selectedNote$ = atom<string | null>(null)
 
     return {
-      pagination$,
-      request$
+      selectedFolder$,
+      selectedNote$
     }
   })
 
-  const request = useObservable(self.request$)
-  const pagination = useObservable(self.pagination$)
+  const selectedFolder = useObservable(selectedFolder$)
+  const selectedNote = useObservable(selectedNote$)
 
   return (
-    <div className='App'>
-      <button
-        onClick={() => {
-          self.pagination$.actions.prevPage()
-        }}
-      >
-        Prev
-      </button>
-      <span style={{ margin: 4 }}>
-        Page {pagination.page} of {pagination.totalPages}
-      </span>
-      <button
-        onClick={() => {
-          self.pagination$.actions.nextPage()
-        }}
-      >
-        Next
-      </button>
-      {request.isPending && <p>loading</p>}
-      {request.isFulfilled && (
-        <ul>
-          {request.data?.map((todo: any) => (
-            <li key={todo.id}>{todo.title}</li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <ChakraProvider theme={theme}>
+      <Flex h='100%' w='100%'>
+        <Folders
+          w={240}
+          bg='gray.200'
+          selectedFolder={selectedFolder}
+          onFolderSelect={selectedFolder$.actions.set}
+        />
+        <Folder
+          folder={selectedFolder}
+          selectedNote={selectedNote}
+          w={320}
+          bg='gray.100'
+        />
+        <Note id='foo' flex={1} />
+      </Flex>
+    </ChakraProvider>
   )
 }
 
