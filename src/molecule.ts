@@ -36,8 +36,8 @@ export interface Molecule<
 
 export interface MoleculeOptions<
   Children extends ObservableMap,
-  Actions extends {},
-  DerivedState
+  Actions extends {} = Children,
+  DerivedState = ExtractObservableTypes<Children>
 > {
   actions?: (children: Children) => Actions
   deriver?: Deriver<Children, DerivedState>
@@ -45,7 +45,7 @@ export interface MoleculeOptions<
 
 export const molecule = <
   Children extends ObservableMap,
-  Actions extends {} = {},
+  Actions extends {} = Children,
   DerivedState = ExtractObservableTypes<Children>
 >(
   children: Children,
@@ -140,6 +140,6 @@ export const molecule = <
   return {
     ...observable,
     children,
-    actions: actions?.(children) || ({} as Actions)
+    actions: actions?.(children) || ((children as any) as Actions)
   }
 }

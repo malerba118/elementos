@@ -9,12 +9,12 @@ import Folders from './Folders'
 import Folder from './Folder'
 import Note from './Note'
 import { theme } from './theme'
-// import * as api from './api'
+import * as api from './api'
 
 const App = () => {
   const { selectedFolder$, selectedNote$ } = useInit(() => {
     const selectedFolder$ = atom<string | null>(null)
-    const selectedNote$ = atom<string | null>(null)
+    const selectedNote$ = atom<api.Note | null>(null)
 
     return {
       selectedFolder$,
@@ -27,20 +27,23 @@ const App = () => {
 
   return (
     <ChakraProvider theme={theme}>
-      <Flex h='100%' w='100%'>
+      <Flex h='100%'>
         <Folders
           w={240}
-          bg='gray.200'
           selectedFolder={selectedFolder}
           onFolderSelect={selectedFolder$.actions.set}
+          borderRight='2px'
+          borderColor='purple.300'
         />
         <Folder
           folder={selectedFolder}
           selectedNote={selectedNote}
+          onNoteSelect={selectedNote$.actions.set}
           w={320}
-          bg='gray.100'
+          borderRight='2px'
+          borderColor='purple.300'
         />
-        <Note id='foo' flex={1} />
+        <Note noteId={selectedNote?.id || null} flex={1} />
       </Flex>
     </ChakraProvider>
   )

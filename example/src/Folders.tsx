@@ -1,10 +1,10 @@
 import React, { FC } from 'react'
-import { Stack, StackProps, List, ListItem, Text } from '@chakra-ui/react'
+import { Stack, StackProps, List } from '@chakra-ui/react'
 import { useInit } from './react/useInit'
 import { createRequest } from './state/request'
 import { useObservable } from './react/useObservable'
-// import { createRequest } from './state/request'
-// import { createPagination } from './state/pagination'
+import Loader from './Loader'
+import ListItem from './ListItem'
 import * as api from './api'
 
 interface FoldersProps extends StackProps {
@@ -12,24 +12,36 @@ interface FoldersProps extends StackProps {
   onFolderSelect: (folder: string) => void
 }
 
-const Folders: FC<FoldersProps> = ({ ...otherProps }) => {
+const Folders: FC<FoldersProps> = ({
+  selectedFolder,
+  onFolderSelect,
+  ...otherProps
+}) => {
+  // initializer runs only once on first render
   const { request$ } = useInit(() => {
-    const request = createRequest(api.fetchFolders)
-    request.execute()
-    return request
+    const { execute, request$ } = createRequest(api.fetchFolders)
+    execute()
+    return {
+      request$
+    }
   })
 
+  // request$ observable is translated to react state
   const request = useObservable(request$)
 
   return (
-    <Stack {...otherProps}>
-      <List>
+    <Stack {...otherProps} position='relative'>
+      <Loader active={request.isPending} />
+      <List color='purple.700' h='100%' overflow='auto'>
         {request.data?.map((folder) => (
-          <ListItem w='100%' key={folder} onClick={() => {}} rounded={0} p={2}>
-            <Text casing='uppercase' fontSize='sm'>
-              {folder}
-            </Text>
-          </ListItem>
+          <ListItem
+            key={folder}
+            onClick={() => {
+              onFolderSelect(folder)
+            }}
+            active={selectedFolder === folder}
+            title={folder}
+          />
         ))}
       </List>
     </Stack>
