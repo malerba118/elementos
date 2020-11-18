@@ -65,17 +65,15 @@ const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
       }
     },
     {
-      noteId
+      noteId // track value of noteId over time as an atom
     }
   )
 
   const request = useObservable(fetchRequest.request$)
-  const title = useObservable(form$.actions.title)
-  const description = useObservable(form$.actions.description)
+  const form = useObservable(form$)
 
   return (
     <Flex {...otherProps} direction='column' position='relative'>
-      <Loader active={request.isPending} />
       {noteId === null && (
         <Flex h='100%' direction='column' justify='center' align='center'>
           <img src='empty.svg' alt='No note selected' width='200' />
@@ -84,42 +82,47 @@ const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
           </Text>
         </Flex>
       )}
-      {noteId && !request.isPending && (
+      {noteId && (
         <>
-          <Textarea
-            value={title}
-            onChange={(e) => {
-              form$.actions.title.actions.set(e.target.value)
-            }}
-            isFullWidth
-            resize='none'
-            rounded='0'
-            p={2}
-            display='block'
-            focusBorderColor='transparent'
-            boxSizing='border-box'
-            size='lg'
-            fontStyle='bold'
-            minHeight='64px'
-            border='none'
-          />
-          <Flex borderBottom='2px' borderBottomColor='purple.300' />
-          <Textarea
-            value={description}
-            onChange={(e) => {
-              form$.actions.description.actions.set(e.target.value)
-            }}
-            flex='1'
-            isFullWidth
-            resize='none'
-            rounded='0'
-            p={2}
-            display='block'
-            focusBorderColor='transparent'
-            boxSizing='border-box'
-            size='sm'
-            border='none'
-          />
+          <Loader active={request.isPending} />
+          {request.isFulfilled && (
+            <>
+              <Textarea
+                value={form.title}
+                onChange={(e) => {
+                  form$.actions.title.actions.set(e.target.value)
+                }}
+                isFullWidth
+                resize='none'
+                rounded='0'
+                p={2}
+                display='block'
+                focusBorderColor='transparent'
+                boxSizing='border-box'
+                size='lg'
+                fontStyle='bold'
+                minHeight='64px'
+                border='none'
+              />
+              <Flex borderBottom='2px' borderBottomColor='purple.300' />
+              <Textarea
+                value={form.description}
+                onChange={(e) => {
+                  form$.actions.description.actions.set(e.target.value)
+                }}
+                flex='1'
+                isFullWidth
+                resize='none'
+                rounded='0'
+                p={2}
+                display='block'
+                focusBorderColor='transparent'
+                boxSizing='border-box'
+                size='sm'
+                border='none'
+              />
+            </>
+          )}
         </>
       )}
     </Flex>

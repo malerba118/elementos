@@ -27,8 +27,8 @@ export type Deriver<Deps extends ObservableMap, DerivedState> = (
 
 export interface Molecule<
   Children extends ObservableMap,
-  Actions extends {},
-  DerivedState
+  Actions extends {} = Children,
+  DerivedState = ExtractObservableTypes<Children>
 > extends Observable<DerivedState> {
   children: Children
   actions: Actions
