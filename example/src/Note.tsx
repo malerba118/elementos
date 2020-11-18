@@ -74,12 +74,7 @@ const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
   const description = useObservable(form$.actions.description)
 
   return (
-    <Flex
-      {...otherProps}
-      direction='column'
-      color='purple.700'
-      position='relative'
-    >
+    <Flex {...otherProps} direction='column' position='relative'>
       <Loader active={request.isPending} />
       {noteId === null && (
         <Flex h='100%' direction='column' justify='center' align='center'>

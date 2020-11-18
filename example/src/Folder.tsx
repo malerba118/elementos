@@ -40,7 +40,7 @@ const Folder: FC<FolderProps> = ({
   return (
     <Stack {...otherProps} position='relative'>
       <Loader active={request.isPending} />
-      <List color='purple.700' h='100%' overflow='auto'>
+      <List h='100%' overflow='auto'>
         {request.data?.map((note) => (
           <ListItem
             key={note.id}

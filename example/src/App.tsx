@@ -3,8 +3,6 @@ import { Flex, ChakraProvider } from '@chakra-ui/react'
 import { atom } from 'elementos'
 import { useInit } from './react/useInit'
 import { useObservable } from './react/useObservable'
-// import { createRequest } from './state/request'
-// import { createPagination } from './state/pagination'
 import Folders from './Folders'
 import Folder from './Folder'
 import Note from './Note'
@@ -27,7 +25,7 @@ const App = () => {
 
   return (
     <ChakraProvider theme={theme}>
-      <Flex h='100%'>
+      <Flex h='100%' color='purple.700'>
         <Folders
           w={240}
           selectedFolder={selectedFolder}

@@ -46,7 +46,6 @@ export const useInit = <T, Observed extends {} = {}>(
     batched(() => {
       Object.keys(atoms).forEach((key) => {
         if (!Object.is(prevObserved[key], observed[key])) {
-          console.log(atoms[key].actions)
           atoms[key].actions.set(observed[key])
         }
       })

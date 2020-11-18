@@ -21,8 +21,11 @@ const ListItem: FC<ListItemProps> = ({
     <ChakraListItem
       w='100%'
       rounded={0}
-      bg={active ? 'purple.100' : 'none'}
+      bg={active ? 'purple.200' : 'none'}
       p={2}
+      _hover={{
+        bg: active ? 'purple.200' : 'purple.100'
+      }}
       {...otherProps}
     >
       <Text noOfLines={1} casing='uppercase' fontSize='sm'>
