@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { Stack, StackProps, List } from '@chakra-ui/react'
 import { observe } from 'elementos'
-import { useInit } from './react/useInit'
+import { useConstructor } from './react/useConstructor'
 import { createRequest } from './state/request'
 import { useObservable } from './react/useObservable'
 import Loader from './Loader'
@@ -20,7 +20,7 @@ const Folder: FC<FolderProps> = ({
   onNoteSelect,
   ...otherProps
 }) => {
-  const { request$ } = useInit(
+  const { request$ } = useConstructor(
     ({ atoms, beforeUnmount }) => {
       const request = createRequest(api.fetchNotes)
       beforeUnmount(

@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Atom, atom, batched } from 'elementos'
 import usePrevious from './usePrevious'
+import useConstant from './useConstant'
 
-type UnmountSubscriber = () => void
-type Intializer<T, Atoms> = (params: {
+export type UnmountSubscriber = () => void
+export type Constructor<T, Atoms> = (params: {
   beforeUnmount: (subscriber: UnmountSubscriber) => void
   atoms: Atoms
 }) => T
@@ -20,20 +21,20 @@ const mapValues = <Obj extends {}>(obj: Obj, mapper: (val: any) => any) => {
 
 type Atoms<Observed> = { [K in keyof Observed]: Atom<Observed[K]> }
 
-export const useInit = <T, Observed extends {} = {}>(
-  initializer: Intializer<T, Atoms<Observed>>,
+export const useConstructor = <T, Observed extends {} = {}>(
+  constructor: Constructor<T, Atoms<Observed>>,
   observed: Observed = {} as Observed
 ): T => {
   const unmountSubscribersRef = useRef<UnmountSubscriber[]>([])
-  const [atoms] = useState<Atoms<Observed>>(() => {
+  const atoms = useConstant<Atoms<Observed>>(() => {
     return mapValues(observed, (val) => atom(val))
   })
 
-  const [state] = useState(() => {
+  const state = useConstant(() => {
     const beforeUnmount = (subscriber: UnmountSubscriber) => {
       unmountSubscribersRef.current.push(subscriber)
     }
-    return initializer({ beforeUnmount, atoms })
+    return constructor({ beforeUnmount, atoms })
   })
 
   const prevObserved = usePrevious(observed)

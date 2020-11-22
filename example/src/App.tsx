@@ -1,7 +1,7 @@
 import React from 'react'
 import { Flex, ChakraProvider } from '@chakra-ui/react'
 import { atom } from 'elementos'
-import { useInit } from './react/useInit'
+import { useConstructor } from './react/useConstructor'
 import { useObservable } from './react/useObservable'
 import Folders from './Folders'
 import Folder from './Folder'
@@ -10,7 +10,7 @@ import { theme } from './theme'
 import * as api from './api'
 
 const App = () => {
-  const { selectedFolder$, selectedNote$ } = useInit(() => {
+  const { selectedFolder$, selectedNote$ } = useConstructor(() => {
     const selectedFolder$ = atom<string | null>(null)
     const selectedNote$ = atom<api.Note | null>(null)
 

@@ -1,6 +1,6 @@
 import React, { FC } from 'react'
 import { Stack, StackProps, List } from '@chakra-ui/react'
-import { useInit } from './react/useInit'
+import { useConstructor } from './react/useConstructor'
 import { createRequest } from './state/request'
 import { useObservable } from './react/useObservable'
 import Loader from './Loader'
@@ -18,7 +18,7 @@ const Folders: FC<FoldersProps> = ({
   ...otherProps
 }) => {
   // initializer runs only once on first render
-  const { request$ } = useInit(() => {
+  const { request$ } = useConstructor(() => {
     const { execute, request$ } = createRequest(api.fetchFolders)
     execute()
     return {

@@ -10,7 +10,7 @@ export const useObservable = <T extends Observable<any>>(
     return observe(observable, (value) => {
       setState(value)
     })
-  }, [])
+  }, [observable])
 
   return state
 }

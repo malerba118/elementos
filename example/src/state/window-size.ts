@@ -6,17 +6,17 @@ type Size = {
 }
 
 export const createWindowSize$ = () => {
-  const dimensions$ = atom<Size | null>(null)
+  const size$ = atom<Size | null>(null)
 
   let listener: EventListener
-  dimensions$.onObserverChange(({ count }) => {
+  size$.onObserverChange(({ count }) => {
     // if there are no observers, remove listener
     if (count === 0 && listener) {
       window.removeEventListener('resize', listener)
     } else if (count > 0 && !listener) {
       // if there are observers, add listener
       listener = () => {
-        dimensions$.actions.set({
+        size$.actions.set({
           height: window.innerHeight,
           width: window.innerWidth
         })
@@ -25,5 +25,5 @@ export const createWindowSize$ = () => {
     }
   })
 
-  return dimensions$
+  return size$
 }

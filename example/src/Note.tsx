@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { Textarea, Flex, FlexProps, Text } from '@chakra-ui/react'
 import { molecule, observe, atom, batched } from 'elementos'
-import { useInit } from './react/useInit'
+import { useConstructor } from './react/useConstructor'
 import { createRequest } from './state/request'
 import { useObservable } from './react/useObservable'
 import Loader from './Loader'
@@ -12,7 +12,7 @@ interface NoteProps extends FlexProps {
 }
 
 const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
-  const { form$, fetchRequest } = useInit(
+  const { form$, fetchRequest } = useConstructor(
     ({ atoms, beforeUnmount }) => {
       const form$ = molecule(
         {
@@ -92,7 +92,6 @@ const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
                 onChange={(e) => {
                   form$.actions.title.actions.set(e.target.value)
                 }}
-                isFullWidth
                 resize='none'
                 rounded='0'
                 p={2}
@@ -111,7 +110,6 @@ const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
                   form$.actions.description.actions.set(e.target.value)
                 }}
                 flex='1'
-                isFullWidth
                 resize='none'
                 rounded='0'
                 p={2}
