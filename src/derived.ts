@@ -5,12 +5,19 @@ import {
 } from './observable'
 import { getCurrentTransaction } from './context'
 import { Transaction } from './transaction'
-import { createSubscriptionManager, Unsubscribe } from './utils/subscription'
+import { createSubscriptionManager, Unsubscriber } from './utils/subscription'
 import { memoized } from './utils/memoize'
 
-type Deriver<Child, DerivedState> = (
+export type Deriver<Child, DerivedState> = (
   state: ExtractObservableType<Child>
 ) => DerivedState
+
+export interface Derived<
+  Child extends Observable<any>,
+  DerivedState = ExtractObservableType<Child>
+> extends Observable<DerivedState> {
+  child: Child
+}
 
 export const derived = <
   Child extends Observable<any>,
@@ -18,7 +25,7 @@ export const derived = <
 >(
   child: Child,
   deriver: (state: ExtractObservableType<Child>) => DerivedState
-): Observable<DerivedState> => {
+): Derived<Child, DerivedState> => {
   const getChildValue = (transaction?: Transaction) => {
     return child.get((x) => x, transaction)
   }
@@ -26,8 +33,8 @@ export const derived = <
   const observerChangeManager = createSubscriptionManager<
     Parameters<ObserverChangeSubscriber>
   >()
-  let unsubscribeFromChild: Unsubscribe | undefined
-  const manager = createSubscriptionManager<[Transaction | undefined]>({
+  let unsubscribeFromChild: Unsubscriber | undefined
+  const manager = createSubscriptionManager<[Transaction]>({
     onSubscriberChange: ({ count }) => {
       observerChangeManager.notifySubscribers({ count })
       if (count > 0 && !unsubscribeFromChild) {
@@ -44,17 +51,15 @@ export const derived = <
   >()
 
   const subscribeToChild = () => {
-    const unsubscribe = child.subscribe((transaction?: Transaction) => {
-      if (transaction) {
-        if (!transactionDerivers.has(transaction)) {
-          transaction.onCommitPhaseOne(() => {
-            transactionDerivers.delete(transaction)
-          })
-          transaction.onRollback(() => {
-            transactionDerivers.delete(transaction)
-          })
-          transactionDerivers.set(transaction, memoized(deriver))
-        }
+    const unsubscribe = child.subscribe((transaction: Transaction) => {
+      if (!transactionDerivers.has(transaction)) {
+        transaction.onCommitPhaseOne(() => {
+          transactionDerivers.delete(transaction)
+        })
+        transaction.onRollback(() => {
+          transactionDerivers.delete(transaction)
+        })
+        transactionDerivers.set(transaction, memoized(deriver))
       }
       manager.notifySubscribers(transaction)
     })
@@ -75,7 +80,7 @@ export const derived = <
       }
       return selector(memoizedDeriver(getChildValue()))
     },
-    subscribe: (subscriber: (transaction?: Transaction) => void) => {
+    subscribe: (subscriber: (transaction: Transaction) => void) => {
       return manager.subscribe(subscriber)
     },
     onObserverChange: (subscriber) => {
@@ -83,5 +88,8 @@ export const derived = <
     }
   }
 
-  return observable
+  return {
+    ...observable,
+    child
+  }
 }

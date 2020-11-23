@@ -11,23 +11,23 @@ export type Set<State> = (
   transaction?: Transaction
 ) => void
 
-export interface DefaultActions<State> {
+export interface AtomDefaultActions<State> {
   set: Set<State>
 }
 
-export interface Atom<State, Actions extends {} = DefaultActions<State>>
+export interface Atom<State, Actions extends {} = AtomDefaultActions<State>>
   extends Observable<State> {
   actions: Actions
 }
 
 export interface AtomOptions<
   State,
-  Actions extends {} = DefaultActions<State>
+  Actions extends {} = AtomDefaultActions<State>
 > {
   actions: (set: Set<State>) => Actions
 }
 
-export const atom = <State, Actions extends {} = DefaultActions<State>>(
+export const atom = <State, Actions extends {} = AtomDefaultActions<State>>(
   defaultValue: State,
   options?: AtomOptions<State, Actions>
 ): Atom<State, Actions> => {
@@ -36,7 +36,7 @@ export const atom = <State, Actions extends {} = DefaultActions<State>>(
   const observerChangeManager = createSubscriptionManager<
     Parameters<ObserverChangeSubscriber>
   >()
-  const manager = createSubscriptionManager<[Transaction | undefined]>({
+  const manager = createSubscriptionManager<[Transaction]>({
     onSubscriberChange: ({ count }) => {
       observerChangeManager.notifySubscribers({ count })
     }
@@ -44,35 +44,28 @@ export const atom = <State, Actions extends {} = DefaultActions<State>>(
   const set = batched(
     (
       setter: Setter<State> | State,
-      transaction: Transaction | undefined = getCurrentTransaction()
+      transaction: Transaction = getCurrentTransaction() as Transaction
     ) => {
-      if (transaction) {
-        if (!transactionValues.has(transaction)) {
-          transaction.onCommitPhaseOne(() => {
-            value = transactionValues.get(transaction) as State
-            transactionValues.delete(transaction)
-          })
-          transaction.onRollback(() => {
-            transactionValues.delete(transaction)
-          })
-          transactionValues.set(transaction, value)
-        }
-        let nextValue: State
-        if (typeof setter === 'function') {
-          nextValue = (setter as Setter<State>)(
-            transactionValues.get(transaction) as State
-          )
-        } else {
-          nextValue = setter
-        }
-        transactionValues.set(transaction, nextValue)
-      } else {
-        if (typeof setter === 'function') {
-          value = (setter as Setter<State>)(value)
-        } else {
-          value = setter
-        }
+      // transaction will always exist because this function is batched
+      if (!transactionValues.has(transaction)) {
+        transaction.onCommitPhaseOne(() => {
+          value = transactionValues.get(transaction) as State
+          transactionValues.delete(transaction)
+        })
+        transaction.onRollback(() => {
+          transactionValues.delete(transaction)
+        })
+        transactionValues.set(transaction, value)
       }
+      let nextValue: State
+      if (typeof setter === 'function') {
+        nextValue = (setter as Setter<State>)(
+          transactionValues.get(transaction) as State
+        )
+      } else {
+        nextValue = setter
+      }
+      transactionValues.set(transaction, nextValue)
       manager.notifySubscribers(transaction)
     }
   )
@@ -87,7 +80,7 @@ export const atom = <State, Actions extends {} = DefaultActions<State>>(
       }
       return selector(value)
     },
-    subscribe: (subscriber: (transaction?: Transaction) => void) => {
+    subscribe: (subscriber: (transaction: Transaction) => void) => {
       return manager.subscribe(subscriber)
     },
     onObserverChange: (subscriber) => {

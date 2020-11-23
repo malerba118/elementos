@@ -1,15 +1,18 @@
 import { createSubscriptionManager } from './utils/subscription'
 
-type Subscriber = () => void
-type Unsubscribe = () => void
+export type TransactionSubscriber = () => void
+export type TransactionUnsubscriber = () => void
 
 export interface Transaction {
-  id: any
   commit: () => void
   rollback: () => void
-  onCommitPhaseOne: (subscriber: Subscriber) => Unsubscribe
-  onCommitPhaseTwo: (subscriber: Subscriber) => Unsubscribe
-  onRollback: (subscriber: Subscriber) => Unsubscribe
+  onCommitPhaseOne: (
+    subscriber: TransactionSubscriber
+  ) => TransactionUnsubscriber
+  onCommitPhaseTwo: (
+    subscriber: TransactionSubscriber
+  ) => TransactionUnsubscriber
+  onRollback: (subscriber: TransactionSubscriber) => TransactionUnsubscriber
 }
 
 export const transaction = (): Transaction => {
@@ -36,7 +39,6 @@ export const transaction = (): Transaction => {
     return managers.rollback.subscribe(subscriber)
   }
   return {
-    id: Math.random(),
     commit,
     rollback,
     onCommitPhaseOne,

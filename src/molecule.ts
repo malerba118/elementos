@@ -3,11 +3,12 @@ import {
   ObservableMap,
   ExtractObservableTypes,
   ExtractObservableType,
-  ObserverChangeSubscriber
+  ObserverChangeSubscriber,
+  ObservableUnsubscriber
 } from './observable'
 import { Transaction } from './transaction'
 import { getCurrentTransaction } from './context'
-import { createSubscriptionManager } from './utils/subscription'
+import { createSubscriptionManager, Unsubscriber } from './utils/subscription'
 import { memoized, defaultParamsEqual } from './utils/memoize'
 
 const paramsEqual = (params1: any[] | undefined, params2: any[]) => {
@@ -17,9 +18,7 @@ const paramsEqual = (params1: any[] | undefined, params2: any[]) => {
   )
 }
 
-type Unsubscribe = () => void
-
-export type Deriver<Deps extends ObservableMap, DerivedState> = (
+export type MoleculeDeriver<Deps extends ObservableMap, DerivedState> = (
   args: {
     [Index in keyof Deps]: ExtractObservableType<Deps[Index]>
   }
@@ -40,7 +39,7 @@ export interface MoleculeOptions<
   DerivedState = ExtractObservableTypes<Children>
 > {
   actions?: (children: Children) => Actions
-  deriver?: Deriver<Children, DerivedState>
+  deriver?: MoleculeDeriver<Children, DerivedState>
 }
 
 export const molecule = <
@@ -66,8 +65,8 @@ export const molecule = <
   const observerChangeManager = createSubscriptionManager<
     Parameters<ObserverChangeSubscriber>
   >()
-  let unsubscribeFromChildren: Unsubscribe | undefined
-  const manager = createSubscriptionManager<[Transaction | undefined]>({
+  let unsubscribeFromChildren: Unsubscriber | undefined
+  const manager = createSubscriptionManager<[Transaction]>({
     onSubscriberChange: ({ count }) => {
       observerChangeManager.notifySubscribers({ count })
       if (count > 0 && !unsubscribeFromChildren) {
@@ -80,31 +79,25 @@ export const molecule = <
   })
   const transactionDerivers = new WeakMap<
     Transaction,
-    Deriver<Children, DerivedState>
+    MoleculeDeriver<Children, DerivedState>
   >()
 
   const subscribeToChildren = () => {
-    // memoizedDeriver(getChildrenValues())
-    const unsubscribers: Unsubscribe[] = []
+    const unsubscribers: ObservableUnsubscriber[] = []
     Object.values(children).forEach((observable: any) => {
       const unsubscribe = observable.subscribe((transaction: Transaction) => {
-        if (transaction) {
-          if (!transactionDerivers.has(transaction)) {
-            transaction.onCommitPhaseOne(() => {
-              // memoizedDeriver(getChildrenValues(transaction))
-              transactionDerivers.delete(transaction)
-            })
-            transaction.onRollback(() => {
-              transactionDerivers.delete(transaction)
-            })
-            transactionDerivers.set(
-              transaction,
-              memoized(deriver, { paramsEqual })
-            )
-          }
+        if (!transactionDerivers.has(transaction)) {
+          transaction.onCommitPhaseOne(() => {
+            transactionDerivers.delete(transaction)
+          })
+          transaction.onRollback(() => {
+            transactionDerivers.delete(transaction)
+          })
+          transactionDerivers.set(
+            transaction,
+            memoized(deriver, { paramsEqual })
+          )
         }
-        const transactionDeriver = transactionDerivers.get(transaction)
-        transactionDeriver?.(getChildrenValues(transaction))
         manager.notifySubscribers(transaction)
       })
       unsubscribers.push(unsubscribe)
@@ -129,7 +122,7 @@ export const molecule = <
       }
       return selector(memoizedDeriver(getChildrenValues()))
     },
-    subscribe: (subscriber: (transaction?: Transaction) => void) => {
+    subscribe: (subscriber: (transaction: Transaction) => void) => {
       return manager.subscribe(subscriber)
     },
     onObserverChange: (subscriber) => {

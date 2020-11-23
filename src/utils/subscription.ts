@@ -3,7 +3,7 @@ interface CreateSubscriptionManagerOptions {
   reverse?: boolean
 }
 
-export type Unsubscribe = () => void
+export type Unsubscriber = () => void
 
 export const createSubscriptionManager = <SubscriberArgs extends any[] = []>({
   onSubscriberChange,
@@ -12,7 +12,7 @@ export const createSubscriptionManager = <SubscriberArgs extends any[] = []>({
   type Subscriber = (...args: SubscriberArgs) => void
   let subscribers: Subscriber[] = []
   return {
-    subscribe: (subscriber: Subscriber): Unsubscribe => {
+    subscribe: (subscriber: Subscriber): Unsubscriber => {
       subscribers = reverse
         ? [subscriber, ...subscribers]
         : [...subscribers, subscriber]
