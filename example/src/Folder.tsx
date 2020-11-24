@@ -2,7 +2,7 @@ import React, { FC } from 'react'
 import { Stack, StackProps, List } from '@chakra-ui/react'
 import { observe } from 'elementos'
 import { useConstructor } from './react/useConstructor'
-import { createRequest } from './state/request'
+import { createRequest$ } from './state/request'
 import { useObservable } from './react/useObservable'
 import Loader from './Loader'
 import ListItem from './ListItem'
@@ -10,8 +10,8 @@ import * as api from './api'
 
 interface FolderProps extends StackProps {
   folder: string | null
-  selectedNote: api.Note | null
-  onNoteSelect: (note: api.Note) => void
+  selectedNote: number | null
+  onNoteSelect: (noteId: number) => void
 }
 
 const Folder: FC<FolderProps> = ({
@@ -22,13 +22,15 @@ const Folder: FC<FolderProps> = ({
 }) => {
   const { request$ } = useConstructor(
     ({ atoms, beforeUnmount }) => {
-      const request = createRequest(api.fetchNotes)
+      const request$ = createRequest$(api.fetchNotes)
       beforeUnmount(
         observe(atoms.folder, (folder) => {
-          request.execute({ folder })
+          request$.actions.execute({ folder })
         })
       )
-      return request
+      return {
+        request$
+      }
     },
     {
       folder
@@ -45,9 +47,9 @@ const Folder: FC<FolderProps> = ({
           <ListItem
             key={note.id}
             onClick={() => {
-              onNoteSelect(note)
+              onNoteSelect(note.id)
             }}
-            active={selectedNote?.id === note.id}
+            active={selectedNote === note.id}
             title={note.title}
             description={note.description}
           />

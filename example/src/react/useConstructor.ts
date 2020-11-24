@@ -47,7 +47,7 @@ export const useConstructor = <T, Observed extends {} = {}>(
     batched(() => {
       Object.keys(atoms).forEach((key) => {
         if (!Object.is(prevObserved[key], observed[key])) {
-          atoms[key].actions.set(observed[key])
+          atoms[key].actions.set(() => observed[key])
         }
       })
     })()

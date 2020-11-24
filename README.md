@@ -6,7 +6,7 @@
 
 Elementos is a framework-agnostic, reactive state management library with an emphasis on state composition and encapsulation.
 
-Please see the [full documentation](https://malerba118.github.io/elementos-docs)!
+**Please see the [full documentation](https://malerba118.github.io/elementos-docs)!**
  
 ## Install
 

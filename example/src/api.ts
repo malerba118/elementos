@@ -124,7 +124,7 @@ const timeout = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms))
 
 export const fetchFolders = async () => {
-  await timeout(1500)
+  await timeout(750)
   const folders = notes.reduce((set, note) => {
     if (note.folder) {
       set.add(note.folder)
@@ -139,7 +139,8 @@ export const fetchNotes = async ({
   perPage = 10,
   folder
 }: FetchNotesOptions = {}) => {
-  await timeout(1500)
+  console.log('FETCHING NOTES')
+  await timeout(750)
   let filteredNotes = notes.filter((note) => {
     return folder == null ? true : note.folder === folder
   })
@@ -147,7 +148,8 @@ export const fetchNotes = async ({
 }
 
 export const fetchNote = async (id: number) => {
-  await timeout(1000)
+  console.log('FETCHING NOTE: ' + id)
+  await timeout(750)
   const note = notes.find((note) => note.id === id)
   return note != null
     ? {
@@ -162,7 +164,8 @@ type UpdateNotePayload = {
 }
 
 export const updateNote = async (id: number, payload: UpdateNotePayload) => {
-  await timeout(1500)
+  console.log('UPDATING NOTE: ' + id)
+  await timeout(750)
   notes = notes.map((note) => {
     if (note.id === id) {
       return {

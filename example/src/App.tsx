@@ -7,12 +7,11 @@ import Folders from './Folders'
 import Folder from './Folder'
 import Note from './Note'
 import { theme } from './theme'
-import * as api from './api'
 
 const App = () => {
   const { selectedFolder$, selectedNote$ } = useConstructor(() => {
     const selectedFolder$ = atom<string | null>(null)
-    const selectedNote$ = atom<api.Note | null>(null)
+    const selectedNote$ = atom<number | null>(null)
 
     return {
       selectedFolder$,
@@ -41,7 +40,7 @@ const App = () => {
           borderRight='2px'
           borderColor='purple.300'
         />
-        <Note noteId={selectedNote?.id || null} flex={1} />
+        <Note noteId={selectedNote || null} flex={1} />
       </Flex>
     </ChakraProvider>
   )

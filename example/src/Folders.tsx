@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
 import { Stack, StackProps, List } from '@chakra-ui/react'
 import { useConstructor } from './react/useConstructor'
-import { createRequest } from './state/request'
+import { createRequest$ } from './state/request'
 import { useObservable } from './react/useObservable'
 import Loader from './Loader'
 import ListItem from './ListItem'
@@ -9,7 +9,7 @@ import * as api from './api'
 
 interface FoldersProps extends StackProps {
   selectedFolder: string | null
-  onFolderSelect: (folder: string) => void
+  onFolderSelect: (folder: string | null) => void
 }
 
 const Folders: FC<FoldersProps> = ({
@@ -19,8 +19,8 @@ const Folders: FC<FoldersProps> = ({
 }) => {
   // initializer runs only once on first render
   const { request$ } = useConstructor(() => {
-    const { execute, request$ } = createRequest(api.fetchFolders)
-    execute()
+    const request$ = createRequest$(api.fetchFolders)
+    request$.actions.execute()
     return {
       request$
     }
@@ -33,6 +33,14 @@ const Folders: FC<FoldersProps> = ({
     <Stack {...otherProps} position='relative'>
       <Loader active={request.isPending} />
       <List h='100%' overflow='auto'>
+        <ListItem
+          key={'all'}
+          onClick={() => {
+            onFolderSelect(null)
+          }}
+          active={selectedFolder === null}
+          title={'All'}
+        />
         {request.data?.map((folder) => (
           <ListItem
             key={folder}

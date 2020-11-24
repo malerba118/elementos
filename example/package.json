@@ -23,13 +23,15 @@
     "@types/react-dom": "file:../node_modules/@types/react-dom",
     "elementos": "file:..",
     "framer-motion": "^2.9.4",
+    "lodash": "^4.17.20",
     "react": "file:../node_modules/react",
     "react-dom": "file:../node_modules/react-dom",
     "react-scripts": "file:../node_modules/react-scripts",
     "typescript": "file:../node_modules/typescript"
   },
   "devDependencies": {
-    "@babel/plugin-syntax-object-rest-spread": "^7.8.3"
+    "@babel/plugin-syntax-object-rest-spread": "^7.8.3",
+    "@types/lodash": "^4.14.165"
   },
   "eslintConfig": {
     "extends": "react-app"

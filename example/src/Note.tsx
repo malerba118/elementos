@@ -1,8 +1,9 @@
 import React, { FC } from 'react'
+import debounce from 'lodash/debounce'
 import { Textarea, Flex, FlexProps, Text } from '@chakra-ui/react'
 import { molecule, observe, atom, batched } from 'elementos'
 import { useConstructor } from './react/useConstructor'
-import { createRequest } from './state/request'
+import { createRequest$ } from './state/request'
 import { useObservable } from './react/useObservable'
 import Loader from './Loader'
 import * as api from './api'
@@ -12,7 +13,7 @@ interface NoteProps extends FlexProps {
 }
 
 const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
-  const { form$, fetchRequest } = useConstructor(
+  const { form$, fetchRequest$ } = useConstructor(
     ({ atoms, beforeUnmount }) => {
       const form$ = molecule(
         {
@@ -31,20 +32,24 @@ const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
         }
       )
 
-      const fetchRequest = createRequest(api.fetchNote)
-      const updateRequest = createRequest(api.updateNote)
+      const debouncedUpdateNote = debounce(api.updateNote, 1000)
+
+      const fetchRequest$ = createRequest$(api.fetchNote)
+      const updateRequest$ = createRequest$(async (id, payload) => {
+        debouncedUpdateNote(id, payload)
+      })
 
       beforeUnmount(
         observe(atoms.noteId, (id) => {
           // whenever noteId changes via props, refetch note
           if (id) {
-            fetchRequest.execute(id)
+            fetchRequest$.actions.execute(id)
           }
         })
       )
 
       beforeUnmount(
-        observe(fetchRequest.request$, ({ isFulfilled, data }) => {
+        observe(fetchRequest$, ({ isFulfilled, data }) => {
           // whenever refetch succeeds, update the form data
           if (isFulfilled) {
             form$.actions.setData(data)
@@ -55,13 +60,13 @@ const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
       beforeUnmount(
         observe(form$, (form) => {
           // whenever form data changes, get note id and update note
-          updateRequest.execute(atoms.noteId.get(), form)
+          updateRequest$.actions.execute(atoms.noteId.get(), form)
         })
       )
 
       return {
         form$,
-        fetchRequest
+        fetchRequest$
       }
     },
     {
@@ -69,7 +74,7 @@ const Note: FC<NoteProps> = ({ noteId, ...otherProps }) => {
     }
   )
 
-  const request = useObservable(fetchRequest.request$)
+  const request = useObservable(fetchRequest$)
   const form = useObservable(form$)
 
   return (
