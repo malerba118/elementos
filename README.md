@@ -1,6 +1,4 @@
-# elementos
-
-> Composable reactive state management
+![foo](https://github.com/malerba118/elementos-docs/blob/main/static/img/logo.svg)
 
 [![NPM](https://img.shields.io/npm/v/elementos.svg)](https://www.npmjs.com/package/elementos) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
