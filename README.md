@@ -14,49 +14,76 @@ npm install --save elementos
 
 ## Basic Usage
 
-[Open in CodeSandbox](https://codesandbox.io/s/elementos-dialog-state-p02d5)
+[Open in CodeSandbox](https://codesandbox.io/s/elementos-basic-usage-7yng7?file=/src/index.js)
 
-```jsx
-import { atom, molecule, batched } from 'elementos'
+```js
+import { atom, molecule, observe } from "elementos";
 
-const createVisibility$ = (defaultValue) => {
-  return atom(defaultValue, {
+document.getElementById("app").innerHTML = `
+  <button id="inc-count-one">
+    Increment Count One
+  </button>
+  <button id="inc-count-two">
+    Increment Count Two
+  </button>
+  <p>
+    Count One: <span id="count-one"></span>
+  </p>
+  <p>
+    Count Two: <span id="count-two"></span>
+  </p>
+  <p>
+    Sum: <span id="sum"></span>
+  </p>
+`;
+
+const createCount$ = (defaultVal) => {
+  return atom(defaultVal, {
     actions: (set) => ({
-      open: () => set(true),
-      close: () => set(false)
+      increment: () => set((prev) => prev + 1)
     })
   });
 };
 
-const createDialog$ = ({ isOpen = false, context = null } = {}) => {
-  const visibility$ = createVisibility$(isOpen);
-  const context$ = atom(context);
+const countOne$ = createCount$(0);
+const countTwo$ = createCount$(0);
+const sum$ = molecule(
+  {
+    countOne: countOne$,
+    countTwo: countTwo$
+  },
+  {
+    deriver: ({ countOne, countTwo }) => countOne + countTwo
+  }
+);
 
-  const dialog$ = molecule(
-    {
-      visibility: visibility$,
-      context: context$
-    },
-    {
-      actions: ({ visibility, context }) => ({
-        open: batched((nextContext) => {
-          context.actions.set(nextContext);
-          visibility.actions.open();
-        }),
-        close: batched(() => {
-          context.actions.set(null);
-          visibility.actions.close();
-        })
-      }),
-      deriver: ({ visibility, context }) => ({
-        isOpen: visibility,
-        context
-      })
-    }
-  );
-
-  return dialog$;
+const elements = {
+  incCountOne: document.getElementById("inc-count-one"),
+  incCountTwo: document.getElementById("inc-count-two"),
+  countOne: document.getElementById("count-one"),
+  countTwo: document.getElementById("count-two"),
+  sum: document.getElementById("sum")
 };
+
+elements.incCountOne.onclick = () => {
+  countOne$.actions.increment();
+};
+
+elements.incCountTwo.onclick = () => {
+  countTwo$.actions.increment();
+};
+
+observe(countOne$, (countOne) => {
+  elements.countOne.innerHTML = countOne;
+});
+
+observe(countTwo$, (countTwo) => {
+  elements.countTwo.innerHTML = countTwo;
+});
+
+observe(sum$, (sum) => {
+  elements.sum.innerHTML = sum;
+});
 ```
 
 ## License
